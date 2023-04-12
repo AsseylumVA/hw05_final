@@ -1,0 +1,31 @@
+{% extends 'base.html' %}
+
+{% block title %}
+  Профайл пользователя {{ author }}
+{% endblock %}
+
+{% block content %}
+{% load thumbnail %}
+  <!-- класс py-5 создает отступы сверху и снизу блока -->
+  <div class="container py-5">
+    <h1>Записи пользователя {{ author }}</h1>
+    <p>
+      Всего записей: {{ posts_count }}
+    </p>
+    {% if following %}
+      <a class="btn btn-lg btn-light" href="{% url 'posts:profile_unfollow' author.username %}" role="button">
+        Отписаться
+      </a>
+    {% elif user != author %}
+      <a class="btn btn-lg btn-primary" href="{% url 'posts:profile_follow' author.username %}" role="button">
+        Подписаться
+      </a>
+    {% endif %}
+    {% for post in page_obj %}
+      {% include 'posts/includes/post_list.html'%}
+      {% if not forloop.last %}<hr>{% endif %}
+    {% endfor %}
+
+    {% include 'includes/paginator.html' %}
+  </div>  
+{% endblock %}
