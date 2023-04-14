@@ -51,6 +51,7 @@ class ViewsTest(TestCase):
             slug=GROUP_SLUG,
             description=GROUP_DESCRIPTION,
         )
+        cls.follow_author = User.objects.create_user(username='author')
 
         Post.objects.bulk_create(
             [
@@ -108,7 +109,7 @@ class ViewsTest(TestCase):
 
     def test_context_posts_pages(self):
         """Проверка контекста"""
-        post = Post.objects.get(id=1)
+        post = Post.objects.last()
         data = {
             POST_CREATE_URL_NAME: (
                 {},
@@ -259,10 +260,9 @@ class ViewsTest(TestCase):
         response = self.client.get(reverse(INDEX_URL_NAME))
         self.assertNotEqual(content, response.content)
 
-    def test_follows(self):
+    def test_follow(self):
         """Тест подписок"""
-        follow_author = User.objects.create_user(username='author')
-        author_name = follow_author.username
+        author_name = self.follow_author.username
         response = self.auth_client.get(
             reverse(FOLLOW_URL_NAME, kwargs={'username': author_name})
         )
@@ -276,10 +276,17 @@ class ViewsTest(TestCase):
         self.assertTrue(
             Follow.objects.filter(
                 user=self.author,
-                author=follow_author,
+                author=self.follow_author,
             ).exists()
         )
 
+    def test_unfollow(self):
+        """Тест отписок"""
+        Follow.objects.get_or_create(
+            user=self.author,
+            author=self.follow_author,
+        )
+        author_name = self.follow_author.username
         response = self.auth_client.get(
             reverse(UNFOLLOW_URL_NAME, kwargs={'username': author_name})
         )
@@ -289,5 +296,5 @@ class ViewsTest(TestCase):
         ))
         self.assertFalse(
             Follow.objects.filter(user=self.author,
-                                  author=follow_author,).exists()
+                                  author=self.follow_author,).exists()
         )

@@ -1,5 +1,5 @@
 def year(request):
-    from datetime import date
+    from datetime import datetime
     return {
-        'year': date.today().year,
+        'year': datetime.utcnow().year,
     }

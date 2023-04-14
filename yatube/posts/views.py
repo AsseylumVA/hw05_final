@@ -60,7 +60,7 @@ def group_posts(request, slug):
 
 def profile(request, username):
     """Профиль пользователя"""
-    author = User.objects.get(username=username)
+    author = get_object_or_404(User, username=username)
     posts = author.posts.all()
     posts_count = posts.count()
     page_obj = paginate(request, posts)
@@ -149,7 +149,7 @@ def post_edit(request, post_id):
 
 @login_required
 def add_comment(request, post_id):
-    post = Post.objects.get(id=post_id)
+    post = get_object_or_404(Post, id=post_id)
     form = CommentForm(request.POST or None)
     if form.is_valid():
         comment = form.save(commit=False)

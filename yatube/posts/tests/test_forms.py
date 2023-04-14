@@ -6,7 +6,7 @@ from django.contrib.auth import get_user_model
 from django.conf import settings
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.urls import reverse
-from django.test import TestCase, Client
+from django.test import TestCase, Client, override_settings
 
 from posts.models import Post, Group
 
@@ -48,6 +48,7 @@ class FormsTests(TestCase):
         self.authorized_client = Client()
         self.authorized_client.force_login(self.author)
 
+    @override_settings(MEDIA_ROOT=TEMP_MEDIA_ROOT)
     def test_create_post(self):
         """Владиная форма создаст пост"""
         posts_count = Post.objects.count()
@@ -74,7 +75,7 @@ class FormsTests(TestCase):
         response = self.authorized_client.post(
             reverse(POST_CREATE_URL_NAME),
             data=form_data,
-            follow=True
+            follow=True,
         )
 
         self.assertEqual(response.status_code, HTTPStatus.OK)
@@ -84,6 +85,31 @@ class FormsTests(TestCase):
                     kwargs={'username': self.author.username})
         )
         self.assertNotEqual(posts_count, Post.objects.count())
+
+    def test_create_post_invalid_image(self):
+        """Проверка с другим файлом вместо картинки"""
+        uploaded = SimpleUploadedFile(
+            name='small.txt',
+            content=b'not image',
+            content_type='text/txt'
+        )
+        form_data = {
+            'text': POST_TEXT,
+            'image': uploaded,
+        }
+        response = self.authorized_client.post(
+            reverse(POST_CREATE_URL_NAME),
+            data=form_data,
+            follow=True,
+        )
+        self.assertFormError(
+            response,
+            'form',
+            'image',
+            ('Загрузите правильное изображение.'
+             ' Файл, который вы загрузили,'
+             ' поврежден или не является изображением.')
+        )
 
     def test_post_edit(self):
         """Валидная форма редактирует пост"""

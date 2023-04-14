@@ -1,6 +1,8 @@
 from django.db import models
 from django.contrib.auth import get_user_model
 
+from yatube.settings import POSTS_MEDIA_ROOT
+
 User = get_user_model()
 
 
@@ -39,10 +41,9 @@ class Post(models.Model):
         verbose_name='Сообщество для публикации поста',
         help_text='Сообщество, к которому будет относиться пост',
     )
-
     image = models.ImageField(
         'Изображение',
-        upload_to='posts/',
+        upload_to=POSTS_MEDIA_ROOT,
         blank=True
     )
 
@@ -60,11 +61,15 @@ class Comment(models.Model):
         Post,
         on_delete=models.CASCADE,
         related_name='comments',
+        verbose_name='Пост',
+        help_text='Пост к которому относится комментарий',
     )
     author = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
-        related_name='comments'
+        related_name='comments',
+        verbose_name='Автор',
+        help_text='Автор комментария',
     )
     text = models.TextField('Комментарий', help_text='Текст комментария')
     created = models.DateTimeField(
@@ -72,15 +77,31 @@ class Comment(models.Model):
         auto_now_add=True,
     )
 
+    class Meta:
+        verbose_name = 'Комментарий'
+        verbose_name_plural = 'Комментарии'
+
 
 class Follow(models.Model):
     user = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
         related_name='follower',
+        verbose_name='Подписчик',
     )
     author = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
         related_name='following',
+        verbose_name='Автор',
     )
+
+    class Meta:
+        verbose_name = 'Подписка'
+        verbose_name_plural = 'Подписки'
+        constraints = [
+            models.UniqueConstraint(
+                fields=['user', 'author'],
+                name='unique_follow',
+            )
+        ]
